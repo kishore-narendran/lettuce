@@ -106,17 +106,18 @@ public class RedisCommandFactory {
      * @param connection must not be {@literal null}.
      * @param redisCodecs must not be {@literal null}.
      */
-    public RedisCommandFactory(StatefulConnection<?, ?> connection, List<RedisCodec<?, ?>> redisCodecs) {
+    public RedisCommandFactory(StatefulConnection<?, ?> connection, Iterable<RedisCodec<?, ?>> redisCodecs) {
 
         LettuceAssert.notNull(connection, "Redis Connection must not be null");
-        LettuceAssert.notNull(redisCodecs, "List of RedisCodecs must not be null");
+        LettuceAssert.notNull(redisCodecs, "Iterable of RedisCodec must not be null");
 
         this.connection = connection;
-        this.redisCodecs.addAll(redisCodecs);
+        this.redisCodecs.addAll(LettuceLists.newList(redisCodecs));
 
         commandMethodVerifier = new CommandMethodVerifier(getCommands(connection));
     }
 
+    @SuppressWarnings("unchecked")
     private List<CommandDetail> getCommands(StatefulConnection<?, ?> connection) {
 
         List<Object> commands = Collections.emptyList();

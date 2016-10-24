@@ -18,7 +18,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
  * 
  * @author Will Glozer
  */
-public class SortArgs extends CompositeArgs {
+public class SortArgs implements CompositeArgument {
 
     private String by;
     private Limit limit = Limit.unlimited();
@@ -103,7 +103,7 @@ public class SortArgs extends CompositeArgs {
     }
 
     @Override
-    <K, V> void build(CommandArgs<K, V> args) {
+    public <K, V> void build(CommandArgs<K, V> args) {
 
         if (by != null) {
             args.add(BY);

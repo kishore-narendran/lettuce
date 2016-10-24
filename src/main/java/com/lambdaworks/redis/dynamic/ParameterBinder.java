@@ -1,16 +1,14 @@
 package com.lambdaworks.redis.dynamic;
 
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.lambdaworks.redis.CompositeArgument;
 import com.lambdaworks.redis.dynamic.parameter.MethodParametersAccessor;
 import com.lambdaworks.redis.dynamic.segment.CommandSegment;
 import com.lambdaworks.redis.dynamic.segment.CommandSegment.ArgumentContribution;
 import com.lambdaworks.redis.dynamic.segment.CommandSegments;
-import com.lambdaworks.redis.dynamic.support.ReflectionUtils;
-import com.lambdaworks.redis.internal.LettuceClassUtils;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
@@ -21,8 +19,6 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
  * @since 5.0
  */
 class ParameterBinder {
-
-    private static final Class<?> ARGUMENT_OBJECT = LettuceClassUtils.findClass("com.lambdaworks.redis.CompositeArgs");
 
     /**
      * Bind {@link CommandSegments} and method parameters to {@link CommandArgs}.
@@ -117,11 +113,8 @@ class ParameterBinder {
             return;
         }
 
-        if (ARGUMENT_OBJECT.isAssignableFrom(argument.getClass())) {
-
-            Method build = ReflectionUtils.findMethod(argument.getClass(), "build", CommandArgs.class);
-            build.setAccessible(true);
-            ReflectionUtils.invokeMethod(build, argument, args);
+        if (argument instanceof CompositeArgument) {
+            ((CompositeArgument) argument).build(args);
         }
     }
 }
