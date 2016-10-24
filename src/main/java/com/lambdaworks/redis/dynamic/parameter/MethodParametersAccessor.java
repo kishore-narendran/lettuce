@@ -1,9 +1,9 @@
 package com.lambdaworks.redis.dynamic.parameter;
 
+import java.util.Iterator;
+
 import com.lambdaworks.redis.dynamic.domain.FlushMode;
 import com.lambdaworks.redis.dynamic.domain.Timeout;
-
-import java.util.Iterator;
 
 /**
  * Accessor interface to method parameters during the actual invocation.
@@ -23,21 +23,21 @@ public interface MethodParametersAccessor {
      * skipped without noticed in the index. For a method signature taking {@link String}, {@link Timeout} , {@link String},
      * {@code #getBindableParameter(1)} would return the second {@link String} value.
      *
-     * @param index
+     * @param index parameter index.
      * @return the bindable value.
      */
     Object getBindableValue(int index);
 
     /**
      *
-     * @param index
+     * @param index parameter index.
      * @return {@literal true} if the parameter at {@code index} is a key.
      */
     boolean isKey(int index);
 
     /**
      *
-     * @param index
+     * @param index parameter index.
      * @return {@literal true} if the parameter at {@code index} is a value.
      */
     boolean isValue(int index);
@@ -57,4 +57,14 @@ public interface MethodParametersAccessor {
      * @return
      */
     int resolveParameterIndex(String name);
+
+    /**
+     * Return {@literal true} if the parameter at {@code index} is a bindable {@literal null} value that requires a
+     * {@literal null} value instead of being skipped.
+     * 
+     * @param index parameter index.
+     * @return {@literal true} if the parameter at {@code index} is a bindable {@literal null} value that requires a
+     *         {@literal null} value instead of being skipped.
+     */
+    boolean isBindableNullValue(int index);
 }
