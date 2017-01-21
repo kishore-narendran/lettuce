@@ -482,16 +482,9 @@
 
         <profile>
 
-            <!--
-                Profile to be activated when building the distribution atrifacts.
-                Generates reference documentation, aggregates JavaDoc etc. Has to be combined with
-                profiles "release" or "milestone" to deploy artifacts into the appropriate places.
-            -->
-
             <id>distribute</id>
 
             <properties>
-                <shared.resources>${project.build.directory}/shared-resources</shared.resources>
                 <maven.install.skip>true</maven.install.skip>
                 <skipTests>true</skipTests>
             </properties>
@@ -519,53 +512,39 @@
                     </plugin>
 
                     <plugin>
-                        <groupId>org.asciidoctor</groupId>
-                        <artifactId>asciidoctor-maven-plugin</artifactId>
-                    </plugin>
-
-                    <!--
-                        Copies all namespaces schemas to target/schemas flatten the directory structure.
-                    -->
-
-                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
                         <executions>
 
                             <execution>
-                                <id>copy-documentation-resources</id>
-                                <phase>generate-resources</phase>
+                                <id>rename-reference-docs</id>
+                                <phase>process-resources</phase>
                                 <configuration>
                                     <target>
-                                        <copy todir="${project.basedir}/target/site/reference/html">
-                                            <fileset dir="${shared.resources}/asciidoc" erroronmissingdir="false">
-                                                <include name="**/*.css"/>
-                                            </fileset>
-                                            <flattenmapper/>
-                                        </copy>
-                                        <copy todir="${project.basedir}/target/site/reference/html/images">
-                                            <fileset dir="${basedir}/src/main/asciidoc" erroronmissingdir="false">
-                                                <include name="**/*.png"/>
-                                                <include name="**/*.gif"/>
-                                                <include name="**/*.jpg"/>
-                                            </fileset>
-                                            <flattenmapper/>
-                                        </copy>
+                                        <copy failonerror="false"
+                                              file="${project.build.directory}/generated-docs/index.pdf"
+                                              tofile="target/site/reference/pdf/lettuce-reference.pdf"/>
                                     </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
                             </execution>
-                        </executions>
 
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctor-maven-plugin</artifactId>
                     </plugin>
 
                 </plugins>
 
+
                 <pluginManagement>
                     <plugins>
-
 
                         <!--
                             Asciidoctor
@@ -574,16 +553,12 @@
                         <plugin>
                             <groupId>org.asciidoctor</groupId>
                             <artifactId>asciidoctor-maven-plugin</artifactId>
+                            <version>1.5.3</version>
                             <dependencies>
                                 <dependency>
                                     <groupId>org.asciidoctor</groupId>
                                     <artifactId>asciidoctorj-pdf</artifactId>
                                     <version>1.5.0-alpha.11</version>
-                                </dependency>
-                                <dependency>
-                                    <groupId>org.asciidoctor</groupId>
-                                    <artifactId>asciidoctorj-epub3</artifactId>
-                                    <version>1.5.0-alpha.6</version>
                                 </dependency>
                             </dependencies>
                             <executions>
@@ -616,7 +591,6 @@
                                     </goals>
                                     <configuration>
                                         <backend>pdf</backend>
-                                        <outputDirectory>target/site/reference</outputDirectory>
                                     </configuration>
                                 </execution>
 

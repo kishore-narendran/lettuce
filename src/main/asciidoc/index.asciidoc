@@ -1,4 +1,4 @@
-= Lettuce Guide
+= Lettuce Reference Guide
 Mark Paluch <https://twitter.com/mp911de[@mp911de]>;
 :ext-doc: https://raw.githubusercontent.com/wiki/mp911de/lettuce/
 {version}
@@ -8,7 +8,7 @@ Mark Paluch <https://twitter.com/mp911de[@mp911de]>;
 :sectnums:
 :sectanchors:
 
-include::preface.asciidoc[]
+include::overview.asciidoc[]
 
 include::getting-started.asciidoc[]
 

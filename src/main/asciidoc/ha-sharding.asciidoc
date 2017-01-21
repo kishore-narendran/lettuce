@@ -6,7 +6,7 @@
 :cco-adaptive-link: <<clientoptions.cluster-specific-options,Adaptive updates>>
 
 [[ha-sharding]]
-== HA and Sharding
+== High-Availability and Sharding
 
 [[master-slave]]
 === Master/Slave
