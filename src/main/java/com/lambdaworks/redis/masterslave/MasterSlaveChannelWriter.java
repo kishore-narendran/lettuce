@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.lambdaworks.redis.masterslave;
+
+import java.util.*;
 
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisChannelWriter;
@@ -48,18 +50,86 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
         }
 
         MasterSlaveConnectionProvider.Intent intent = getIntent(command.getType());
-        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection) masterSlaveConnectionProvider.getConnection(intent);
+        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection) masterSlaveConnectionProvider
+                .getConnection(intent);
 
         return connection.dispatch(command);
     }
 
-    private MasterSlaveConnectionProvider.Intent getIntent(ProtocolKeyword type) {
+    @Override
+    public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands) {
 
-        if (ReadOnlyCommands.isReadOnlyCommand(type)) {
-            return MasterSlaveConnectionProvider.Intent.READ;
+        LettuceAssert.notNull(commands, "Commands must not be null");
+
+        if (closed) {
+            throw new RedisException("Connection is closed");
         }
 
-        return MasterSlaveConnectionProvider.Intent.WRITE;
+        List<RedisCommand<K, V, ?>> read = new ArrayList<>(commands.size());
+        List<RedisCommand<K, V, ?>> write = new ArrayList<>(commands.size());
+
+        // TODO: Retain order or retain Intent preference?
+        // Currently: Retain order
+        MasterSlaveConnectionProvider.Intent intent = getIntent(commands);
+
+        for (RedisCommand<K, V, ?> command : commands) {
+
+            if (intent == MasterSlaveConnectionProvider.Intent.READ) {
+                read.add(command);
+            } else {
+                write.add(command);
+            }
+        }
+        StatefulRedisConnection<K, V> readConnection = null;
+        StatefulRedisConnection<K, V> writeConnection = null;
+
+        if (!read.isEmpty()) {
+            readConnection = (StatefulRedisConnection) masterSlaveConnectionProvider
+                    .getConnection(MasterSlaveConnectionProvider.Intent.READ);
+            readConnection.dispatch(read);
+        }
+
+        if (!write.isEmpty()) {
+            writeConnection = (StatefulRedisConnection) masterSlaveConnectionProvider
+                    .getConnection(MasterSlaveConnectionProvider.Intent.WRITE);
+            writeConnection.dispatch(write);
+        }
+
+        read.addAll(write);
+
+        return read;
+    }
+
+    /**
+     * Optimization: Determine command intents and optimize for bulk execution preferring one node.
+     * <p>
+     * If there is only one intent, then we take the intent derived from the commands. If there is more than one intent, then
+     * use {@link MasterSlaveConnectionProvider.Intent#WRITE}.
+     *
+     * @param commands {@link Collection} of {@link RedisCommand commands}.
+     * @return the intent.
+     */
+    static MasterSlaveConnectionProvider.Intent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+
+        Set<MasterSlaveConnectionProvider.Intent> intents = new HashSet<>(2, 1);
+        MasterSlaveConnectionProvider.Intent singleIntent = MasterSlaveConnectionProvider.Intent.WRITE;
+
+        for (RedisCommand<?, ?, ?> command : commands) {
+
+            singleIntent = getIntent(command.getType());
+            intents.add(singleIntent);
+
+            if (intents.size() > 1) {
+                return MasterSlaveConnectionProvider.Intent.WRITE;
+            }
+        }
+
+        return singleIntent;
+    }
+
+    private static MasterSlaveConnectionProvider.Intent getIntent(ProtocolKeyword type) {
+        return ReadOnlyCommands.isReadOnlyCommand(type) ? MasterSlaveConnectionProvider.Intent.READ
+                : MasterSlaveConnectionProvider.Intent.WRITE;
     }
 
     @Override
